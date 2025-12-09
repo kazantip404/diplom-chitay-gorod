@@ -1,0 +1,11 @@
+# Основные зависимости
+pytest==7.4.0
+selenium==4.15.0
+allure-pytest==2.13.2
+requests==2.31.0
+
+# Для управления драйверами
+webdriver-manager==4.0.1
+
+# Дополнительные утилиты
+python-dotenv==1.0.0

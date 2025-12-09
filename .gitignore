@@ -1,0 +1,47 @@
+# Python байт-код
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Кэши и временные файлы
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Виртуальные окружения
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Конфиденциальные данные
+*.env
+.env
+token_cache.json
+token.txt
+*.key
+*.pem
+secrets.json
+
+# Отчёты тестов
+allure-results/
+allure-report/
+test_result*.png
+screenshots/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+desktop.ini
