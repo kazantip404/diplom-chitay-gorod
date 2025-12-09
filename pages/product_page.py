@@ -1,56 +1,90 @@
-"""Страница товара."""
+"""
+Page Object для страницы товара
+"""
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from pages.base_page import BasePage
-from config.config import TestConfig
+from selenium.webdriver.support import expected_conditions as EC
+from .base_page import BasePage  # <-- ТОЧКА!
+import allure
+import logging
+import time
+
+logger = logging.getLogger(__name__)
 
 
 class ProductPage(BasePage):
-    """Страница товара."""
+    """Страница товара"""
 
-    def __init__(self, driver):
-        super().__init__(driver)
+    # Локаторы
+    BUY_BUTTON = (By.CSS_SELECTOR, "button.product-buttons__main-action")
+    CHECKOUT_BUTTON = (By.XPATH, "//button[contains(., 'Оформить')]")
+    CART_ICON = (By.CSS_SELECTOR, "a[href*='cart'], .header-cart")
 
-    def add_to_cart(self) -> None:
-        """Добавление товара в корзину."""
-        self.logger.info("🛒 Добавление в корзину")
+    @allure.step("Нажать кнопку 'Купить'")
+    def click_buy_button(self):
+        """Нажать кнопку 'Купить' или 'В корзину'"""
+        logger.info("🛒 Поиск кнопки 'Купить'")
 
-        buy_button = self.safe_click(
-            (By.CSS_SELECTOR, TestConfig.Selectors.BUY_BUTTON),
-            description="Кнопка 'Купить'"
-        )
-        self.logger.info("✅ Товар добавлен в корзину")
+        button_selectors = [
+            (By.CSS_SELECTOR, "button.product-buttons__main-action"),
+            (By.XPATH, "//button[contains(., 'Купить')]"),
+            (By.XPATH, "//button[contains(., 'В корзину')]"),
+        ]
 
-    def go_to_cart(self) -> None:
-        """Переход в корзину."""
-        self.logger.info("📦 Переход в корзину")
+        for selector_type, selector_value in button_selectors:
+            try:
+                button = self.safe_click(
+                    (selector_type, selector_value),
+                    description=f"Кнопка по селектору {selector_value}"
+                )
 
-        # Проверяем изменилась ли кнопка на "Оформить"
+                button_text = button.text.lower()
+                logger.info(f"✅ Нажата кнопка: {button_text}")
+
+                # Ждем изменения кнопки
+                try:
+                    self.wait.until(
+                        EC.text_to_be_present_in_element(
+                            (By.CSS_SELECTOR, "button.product-buttons__main-action"),
+                            "Оформить"
+                        )
+                    )
+                    logger.info("✅ Кнопка изменилась на 'Оформить'")
+                except:
+                    logger.info("ℹ️ Кнопка не изменилась")
+
+                return True
+            except:
+                continue
+
+        logger.error("❌ Не удалось найти кнопку 'Купить'")
+        return False
+
+    @allure.step("Перейти к оформлению заказа")
+    def proceed_to_checkout(self):
+        """Нажать 'Оформить' или перейти в корзину"""
+        logger.info("📦 Переход к оформлению")
+
+        # Пробуем кнопку 'Оформить'
         try:
-            WebDriverWait(self.driver, 5).until(
-                lambda d: "Оформить" in d.find_element(
-                    By.CSS_SELECTOR, TestConfig.Selectors.CHECKOUT_BUTTON
-                ).text
-            )
-            self.logger.info("✅ Кнопка изменилась на 'Оформить'")
-
             self.safe_click(
-                (By.CSS_SELECTOR, TestConfig.Selectors.CHECKOUT_BUTTON),
+                self.CHECKOUT_BUTTON,
                 description="Кнопка 'Оформить'"
             )
-
-        except TimeoutException:
-            # Если кнопка не изменилась, ищем иконку корзины
-            self.logger.info("ℹ️ Кнопка не изменилась, ищем иконку корзины")
-
+            logger.info("✅ Нажата кнопка 'Оформить'")
+            return True
+        except:
+            # Пробуем иконку корзины
             try:
-                cart_icon = self.safe_click(
-                    (By.CSS_SELECTOR, TestConfig.Selectors.CART_ICON),
+                self.safe_click(
+                    self.CART_ICON,
                     description="Иконка корзины"
                 )
-            except Exception:
+                logger.info("✅ Нажата иконка корзины")
+                return True
+            except:
                 # Прямой переход по URL
-                self.logger.info("ℹ️ Переход по прямому URL корзины")
-                self.driver.get(TestConfig.CART_URL)
-
-        self.wait_for_page_load()
+                logger.info("ℹ️ Переход по прямому URL корзины")
+                self.driver.get("https://www.chitai-gorod.ru/cart/")
+                self.wait_for_page_load()
+                return True

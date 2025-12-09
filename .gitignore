@@ -1,47 +1,81 @@
-# Python байт-код
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Кэши и временные файлы
+# PyTest
 .pytest_cache/
+.mypy_cache/
 .coverage
 htmlcov/
-.mypy_cache/
+.coverage.*
+*.cover
+*.py,cover
+.hypothesis/
 .pytest_cache/
-*.egg-info/
+.coverage
+coverage.xml
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Allure
+allure-results/
+allure-report/
 
-# Виртуальные окружения
+# Environment
+.env
+.venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# Конфиденциальные данные
-*.env
-.env
-token_cache.json
-token.txt
-*.key
-*.pem
-secrets.json
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Отчёты тестов
-allure-results/
-allure-report/
-test_result*.png
-screenshots/
-
-# Системные файлы
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Screenshots
+screenshots/*.png
+!screenshots/.gitkeep
+
+# ChromeDriver
+chromedriver*
+geckodriver*
+
+# Test outputs
+test_result*.png
+page_source*.html

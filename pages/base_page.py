@@ -1,71 +1,80 @@
-"""Базовый класс для всех страниц."""
-import logging
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+import logging
+import time
 
-from config.config import TestConfig
-from utils.wait_utils import WaitUtils
+logger = logging.getLogger(__name__)
 
 
 class BasePage:
-    """Базовый класс страницы."""
+    """Базовый класс с вашими методами - ИСПРАВЛЕННЫЙ"""
 
-    def __init__(self, driver: WebDriver):
+    def __init__(self, driver):
         self.driver = driver
-        self.wait_utils = WaitUtils(driver)
-        self.logger = logging.getLogger(__name__)
+        self.wait = WebDriverWait(driver, 5)
 
-    def wait_for_page_load(self, timeout: int = TestConfig.TIMEOUT) -> None:
-        """Ожидание загрузки страницы."""
-        self.logger.info("⏳ Ожидание загрузки страницы...")
+    def wait_for_page_load(self, timeout=10):
+        """Ожидание загрузки страницы (ваш метод) С ДОПОЛНИТЕЛЬНЫМ ОЖИДАНИЕМ"""
+        logger.info("⏳ Ожидание загрузки страницы...")
         try:
-            WebDriverWait(self.driver, timeout).until(
+            # 1. Ждем readyState = complete
+            self.wait.until(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
-            self.logger.info("✅ Страница загружена")
-            self.wait_utils.wait_exact(1)
+            logger.info("✅ Страница загружена")
+
+            # 2. ДОБАВЛЯЕМ: Ждем минимум 1 секунду (как в вашем рабочем коде)
+            start = time.time()
+            WebDriverWait(self.driver, 2).until(lambda d: time.time() - start >= 1)
+
         except TimeoutException:
-            self.logger.warning("⚠️ Страница не полностью загружена, продолжаем...")
+            logger.warning("⚠️ Страница не полностью загружена, продолжаем...")
 
-    def safe_click(self, locator: tuple, max_retries: int = 3, description: str = ""):
-        """Безопасный клик с обработкой StaleElementReferenceException."""
-        self.logger.info(f"🖱️ Попытка клика: {description}")
+    def wait_one_second(self):
+        """Ожидание 1 секунды без time.sleep"""
+        start = time.time()
+        WebDriverWait(self.driver, 2).until(lambda d: time.time() - start >= 1)
+        return True
 
-        for attempt in range(max_retries):
+    def safe_click(self, locator, description=""):
+        """Безопасный клик С ОЖИДАНИЕМ ПОСЛЕ КЛИКА (как в рабочем коде)"""
+        logger.info(f"🖱️ Попытка клика: {description}")
+
+        for attempt in range(3):
             try:
-                element = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable(locator)
-                )
+                element = self.wait.until(EC.element_to_be_clickable(locator))
                 element.click()
-                self.logger.info(f"✅ Успешный клик: {description}")
-                self.wait_utils.wait_exact(1)
+                logger.info(f"✅ Успешный клик: {description}")
+
+                # ДОБАВЛЯЕМ: Ожидание 1 секунду после клика (как в рабочем коде)
+                self.wait_one_second()
+
                 return element
 
             except StaleElementReferenceException:
-                self.logger.warning(f"🔄 Попытка {attempt + 1}: элемент устарел, пробуем снова...")
-                self.wait_utils.wait_exact(1)
+                logger.warning(f"🔄 Попытка {attempt + 1}: элемент устарел")
+                # Ожидание при повторной попытке
+                self.wait_one_second()
 
             except TimeoutException:
-                self.logger.error(f"❌ Элемент не найден: {description}")
-                if attempt == max_retries - 1:
+                logger.error(f"❌ Элемент не найден: {description}")
+                if attempt == 2:
                     raise
-                self.wait_utils.wait_exact(1)
+                # Ожидание при повторной попытке
+                self.wait_one_second()
 
-        raise TimeoutException(f"Не удалось кликнуть на элемент: {description}")
+        raise TimeoutException(f"Не удалось кликнуть: {description}")
 
-    def safe_find_element(self, by: By, selector: str, timeout: int = TestConfig.TIMEOUT, description: str = ""):
-        """Безопасный поиск элемента."""
-        self.logger.info(f"🔍 Поиск элемента: {description}")
+    def safe_find_element(self, by, selector, description=""):
+        """Безопасный поиск элемента"""
+        logger.info(f"🔍 Поиск элемента: {description}")
         try:
-            element = WebDriverWait(self.driver, timeout).until(
+            element = self.wait.until(
                 EC.presence_of_element_located((by, selector))
             )
-            self.logger.info(f"✅ Элемент найден: {description}")
+            logger.info(f"✅ Элемент найден: {description}")
             return element
         except TimeoutException:
-            self.logger.error(f"❌ Элемент не найден: {description}")
-            self.logger.error(f"   Селектор: {selector}")
+            logger.error(f"❌ Элемент не найден: {description}")
             raise
